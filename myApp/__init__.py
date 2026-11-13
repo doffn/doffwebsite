@@ -1,18 +1,18 @@
 
 import importlib
+import os
+import subprocess
 import sys
+import venv
+from pathlib import Path
 
-# Required packages: (package name, Python import name)
+# Package name, Python import name
 required_packages = [
-    ("time", "time"),
     ("requests", "requests"),
-    ("os", "os"),
-    ("django", "django"),
+    ("Django", "django"),
     ("beautifulsoup4", "bs4"),
-    ("json", "json"),
 ]
 
-# Check whether a package is installed
 def package_installed(import_name):
     try:
         importlib.import_module(import_name)
@@ -21,29 +21,53 @@ def package_installed(import_name):
         return False
 
 
-# Check and report package status
-def check_required_packages():
-    missing_packages = []
+def install_missing_packages():
+    missing = [
+        package
+        for package, import_name in required_packages
+        if not package_installed(import_name)
+    ]
 
-    print("\n========== PACKAGE CHECK ==========")
+    if not missing:
+        print("[SUCCESS] All required packages are installed.")
+        return
 
-    for package_name, import_name in required_packages:
-        if package_installed(import_name):
-            print(f"[INSTALLED] {package_name}")
-        else:
-            print(f"[MISSING]   {package_name}")
-            missing_packages.append(package_name)
+    print("[INFO] Missing packages:", missing)
 
-    print("===================================\n")
+    # Do not modify Vercel's system Python.
+    if os.environ.get("VERCEL"):
+        raise RuntimeError(
+            "Missing packages on Vercel. Install them through "
+            "requirements.txt during the Vercel build."
+        )
 
-    if missing_packages:
-        print("Missing packages:", ", ".join(missing_packages))
-        print("Install them using requirements.txt.")
-        return False
+    # Local development: install into an isolated environment.
+    env_dir = Path(__file__).resolve().parent.parent / ".venv"
 
-    print("All required packages are available.")
-    return True
+    if not env_dir.exists():
+        venv.EnvBuilder(with_pip=True).create(env_dir)
+
+    if os.name == "nt":
+        python_executable = env_dir / "Scripts" / "python.exe"
+    else:
+        python_executable = env_dir / "bin" / "python"
+
+    subprocess.check_call([
+        str(python_executable),
+        "-m",
+        "pip",
+        "install",
+        *missing
+    ])
+
+    print("[SUCCESS] Packages installed in:", env_dir)
+    print("[INFO] Activate this environment and restart Django.")
 
 
-# Run package check
-PACKAGES_OK = check_required_packages()
+for package_name, import_name in required_packages:
+    if package_installed(import_name):
+        print(f"[INSTALLED] {package_name}")
+    else:
+        print(f"[MISSING] {package_name}")
+
+install_missing_packages()
