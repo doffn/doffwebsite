@@ -1,73 +1,35 @@
 
-import importlib
-import os
-import subprocess
-import sys
-import venv
-from pathlib import Path
-
-# Package name, Python import name
+# List of required packages
 required_packages = [
-    ("requests", "requests"),
-    ("Django", "django"),
-    ("beautifulsoup4", "bs4"),
+    ('time', 'time'),
+    ('requests', 'requests'),
+    ('os', 'os'),
+    ('django', 'django'),
+     ('beautifulsoup4', 'BeautifulSoup'),
+    ('json', 'json')
 ]
 
-def package_installed(import_name):
+import os
+# Check if a package is installed
+def package_installed(package_name):
     try:
-        importlib.import_module(import_name)
-        return True
+        __import__(package_name)
     except ImportError:
         return False
-
-
-def install_missing_packages():
-    missing = [
-        package
-        for package, import_name in required_packages
-        if not package_installed(import_name)
-    ]
-
-    if not missing:
-        print("[SUCCESS] All required packages are installed.")
-        return
-
-    print("[INFO] Missing packages:", missing)
-
-    # Do not modify Vercel's system Python.
-    if os.environ.get("VERCEL"):
-        raise RuntimeError(
-            "Missing packages on Vercel. Install them through "
-            "requirements.txt during the Vercel build."
-        )
-
-    # Local development: install into an isolated environment.
-    env_dir = Path(__file__).resolve().parent.parent / ".venv"
-
-    if not env_dir.exists():
-        venv.EnvBuilder(with_pip=True).create(env_dir)
-
-    if os.name == "nt":
-        python_executable = env_dir / "Scripts" / "python.exe"
     else:
-        python_executable = env_dir / "bin" / "python"
+        return True
 
-    subprocess.check_call([
-        str(python_executable),
-        "-m",
-        "pip",
-        "install",
-        *missing
-    ])
+# Install a package using pip
+def install_package(package_name):
+    os.system(f"pip install {package_name}")
 
-    print("[SUCCESS] Packages installed in:", env_dir)
-    print("[INFO] Activate this environment and restart Django.")
-
-
-for package_name, import_name in required_packages:
-    if package_installed(import_name):
-        print(f"[INSTALLED] {package_name}")
+# Import the necessary modules and packages
+for package in required_packages:
+    package_name, import_name = package
+    if package_installed(package_name):
+        globals()[import_name] = __import__(package_name)
+        #print("Packages already installed")
     else:
-        print(f"[MISSING] {package_name}")
+        print(f"Package {package_name} is missing. Please install it.")
+        install_package(package_name)
 
-install_missing_packages()
