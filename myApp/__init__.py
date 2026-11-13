@@ -20,14 +20,9 @@ def package_installed(package_name):
         return True
 
 # Install a package using pip
-def package_installed(package_name):
-    try:
-        importlib.import_module(package_name)
-        print(f"{package_name} INSTALLED")
-        return True
-    except ImportError:
-        return False
-
+def install_package(package_name):
+    importlib.import_module(package_name)
+    print(f"{package_name} INSTALLED")
 
 # Import the necessary modules and packages
 for package in required_packages:
