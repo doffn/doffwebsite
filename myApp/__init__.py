@@ -1,36 +1,49 @@
+
 import importlib
-# List of required packages
+import sys
+
+# Required packages: (package name, Python import name)
 required_packages = [
-    ('time', 'time'),
-    ('requests', 'requests'),
-    ('os', 'os'),
-    ('django', 'django'),
-     ('beautifulsoup4', 'BeautifulSoup'),
-    ('json', 'json')
+    ("time", "time"),
+    ("requests", "requests"),
+    ("os", "os"),
+    ("django", "django"),
+    ("beautifulsoup4", "bs4"),
+    ("json", "json"),
 ]
 
-import os
-# Check if a package is installed
-def package_installed(package_name):
+# Check whether a package is installed
+def package_installed(import_name):
     try:
-        __import__(package_name)
+        importlib.import_module(import_name)
+        return True
     except ImportError:
         return False
-    else:
-        return True
 
-# Install a package using pip
-def install_package(package_name):
-    importlib.import_module(package_name)
-    print(f"{package_name} INSTALLED")
 
-# Import the necessary modules and packages
-for package in required_packages:
-    package_name, import_name = package
-    if package_installed(package_name):
-        globals()[import_name] = __import__(package_name)
-        #print("Packages already installed")
-    else:
-        print(f"Package {package_name} is missing. Please install it.")
-        install_package(package_name)
+# Check and report package status
+def check_required_packages():
+    missing_packages = []
 
+    print("\n========== PACKAGE CHECK ==========")
+
+    for package_name, import_name in required_packages:
+        if package_installed(import_name):
+            print(f"[INSTALLED] {package_name}")
+        else:
+            print(f"[MISSING]   {package_name}")
+            missing_packages.append(package_name)
+
+    print("===================================\n")
+
+    if missing_packages:
+        print("Missing packages:", ", ".join(missing_packages))
+        print("Install them using requirements.txt.")
+        return False
+
+    print("All required packages are available.")
+    return True
+
+
+# Run package check
+PACKAGES_OK = check_required_packages()
