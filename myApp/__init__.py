@@ -11,3 +11,4 @@ required_packages = [
 
 import os
 os.system(f"python3 -m pip install -r requirements.txt")
+
